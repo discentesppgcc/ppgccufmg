@@ -13,12 +13,16 @@
 \usepackage{natbib}
 \usepackage{xcolor}
 \usepackage{lipsum}
-\usepackage[
+
+%% A classe ppgccufmg já carrega o hyperref internamente (necessário para
+%% gerar PDF/A). Não use \usepackage{hyperref} aqui -- configure as opções
+%% do pacote com \hypersetup{} (veja o README para mais detalhes).
+\hypersetup{
 	colorlinks=true,
 	linkcolor=blue, %% Cor dos links do sumário
-	citecolor=red, %% Cor dos links das citações      
+	citecolor=red, %% Cor dos links das citações
 	urlcolor=magenta, %% Cor das urls
-]{hyperref}
+}
 
 %% Exemplo 1 de lista customizada: Glossário ==================
 
