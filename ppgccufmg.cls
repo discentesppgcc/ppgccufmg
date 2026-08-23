@@ -1,7 +1,3 @@
-%%
-%% Copyright (C) 2022 by Ramon Gonçalves Gonze
-%%
-
 %% Identificação da classe %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{ppgccufmg}[2022/05/26 Classe Uma classe LaTeX para dissertações, teses e propostas do Programa de Pós-Graduação em Ciência da Computação (PPGCC) da Universidade Federal de Minas Gerais (UFMG).]
@@ -20,12 +16,30 @@
 
 
 %%  OPÇÕES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\DeclareOption{portugues}{\def\idiomapt} %% Define português como sendo o idioma do documento
-\DeclareOption{english}{\def\idiomaen} %% Define inglês como sendo o idioma do documento
-\DeclareOption{msc}{\def\msc} %% Dissertação de mestrado
-\DeclareOption{phd}{\def\phd} %% Tese de doutorado
-\DeclareOption{mscproposta}{\def\mscproposta} %% Proposta de dissertação de mestrado
-\DeclareOption{phdproposta}{\def\phdproposta} %% Proposta de tese de doutorado
+%% Obs.: os corpos dos \DeclareOption abaixo usam \def\algumaflag{} (com
+%% chaves vazias), e não \def\algumaflag sozinho. Sem as chaves, \def fica
+%% incompleto e, ao ser executado dentro de \ProcessOptions, "rouba" os
+%% tokens seguintes do fluxo de processamento das opções à procura de um
+%% corpo -- o que corrompe o processamento de qualquer opção declarada
+%% depois dela na mesma compilação (bug real encontrado ao testar as novas
+%% opções de PDF/A abaixo, que só se manifestava quando havia opções
+%% suficientes em uso simultaneamente).
+\DeclareOption{portugues}{\def\idiomapt{}} %% Define português como sendo o idioma do documento
+\DeclareOption{english}{\def\idiomaen{}} %% Define inglês como sendo o idioma do documento
+\DeclareOption{msc}{\def\msc{}} %% Dissertação de mestrado
+\DeclareOption{phd}{\def\phd{}} %% Tese de doutorado
+\DeclareOption{mscproposta}{\def\mscproposta{}} %% Proposta de dissertação de mestrado
+\DeclareOption{phdproposta}{\def\phdproposta{}} %% Proposta de tese de doutorado
+
+%% Nível de conformidade PDF/A exigido pelo RI-UFMG (padrão: a-2b) =========
+\newif\ifppgccufmgpdfa
+\ppgccufmgpdfatrue
+\def\ppgccufmgpdfalevel{a-2b}
+\DeclareOption{pdfa1b}{\def\ppgccufmgpdfalevel{a-1b}}
+\DeclareOption{pdfa2b}{\def\ppgccufmgpdfalevel{a-2b}}
+\DeclareOption{pdfa3b}{\def\ppgccufmgpdfalevel{a-3b}}
+\DeclareOption{semvalidacaopdfa}{\ppgccufmgpdfafalse} %% Desliga a geração de PDF/A (ex.: rascunhos)
+%% ==========================================================================
 
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{memoir}}
 \ProcessOptions
@@ -37,7 +51,23 @@
 ]{memoir}
 
 %% OUTRAS DECLARAÇÕES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Geração de PDF/A =========================
+%% pdfx precisa ser o primeiro pacote carregado no documento (antes de
+%% hyperref e de qualquer outro pacote), por isso vem logo após o \LoadClass.
+%% Ele carrega o hyperref internamente já configurado para PDF/A: não
+%% carregue o hyperref novamente no seu .tex, use \hypersetup{} (veja README).
+\ifppgccufmgpdfa
+	\RequirePackage[\ppgccufmgpdfalevel]{pdfx}
+\else
+	%% Com a opção semvalidacaopdfa o pdfx não é carregado, mas o hyperref
+	%% ainda é necessário (para \hypersetup{} funcionar, links, sumário, etc.)
+	\RequirePackage{hyperref}
+\fi
+%% ==========================================
+
 %% Pacotes ==================================
+\RequirePackage[T1]{fontenc} %% Garante fontes com acentuação incorporável (necessário para PDF/A)
+\RequirePackage{lmodern} %% Fontes Latin Modern vetoriais (evita fallback bitmap)
 \RequirePackage[
 	a4paper,
 	left=3cm,
@@ -360,6 +390,31 @@
 	\appendix
 }{}
 
+%% Geração automática dos metadados XMP exigidos pelo pdfx (PDF/A) =========
+%% O pdfx lê o arquivo \jobname.xmpdata no início da compilação (ao carregar
+%% o pacote), ou seja, ANTES deste comando executar (que roda dentro de
+%% \ppgccufmg{}, após \begin{document}). Por isso os metadados escritos aqui
+%% só são de fato incorporados ao PDF a partir da 2ª compilação em diante —
+%% mesmo comportamento de sumário/referências, que também exigem recompilar.
+\newwrite\ppgccufmgxmpfile
+\newcommand{\ppgccufmggerarxmpdata}{
+	\ifppgccufmgpdfa
+		\immediate\openout\ppgccufmgxmpfile=\jobname.xmpdata
+		\immediate\write\ppgccufmgxmpfile{\string\Title{\titulo}}
+		\immediate\write\ppgccufmgxmpfile{\string\Author{\autor}}
+		\ifx\idiomapt\undefined
+			\immediate\write\ppgccufmgxmpfile{\string\Language{en-US}}
+			\immediate\write\ppgccufmgxmpfile{\string\Keywords{\keywords}}
+		\else
+			\immediate\write\ppgccufmgxmpfile{\string\Language{pt-BR}}
+			\immediate\write\ppgccufmgxmpfile{\string\Keywords{\palavraschave}}
+		\fi
+		\immediate\write\ppgccufmgxmpfile{\string\Publisher{Universidade Federal de Minas Gerais}}
+		\immediate\closeout\ppgccufmgxmpfile
+	\fi
+}
+%% ==========================================================================
+
 %% Verifica se todos os parâmetros obrigatórios foram passados
 \newcommand{\verificaobrigatorios}{
 	%% Verifica se o autor(a) foi definido
@@ -424,8 +479,10 @@
 	\setkeys{ppgcc}{#1}
 	
 	\pagestyle{estilopadrao} %% Define 'estilopadrao' como sendo o estilo 'global' das páginas
-	
+
 	\verificaobrigatorios
+
+	\ppgccufmggerarxmpdata %% Gera/atualiza o .xmpdata com os metadados PDF/A (ver observação acima)
 
 	\maketitle %% Capa
 	
