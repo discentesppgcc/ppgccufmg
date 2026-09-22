@@ -18,8 +18,7 @@ Para que seu trabalho seja aceito, deve-se seguir as seguintes orientações par
         \small{Fonte: Elaborado pelo autor(a).}
     \end{figure}
     ```
-- **Palavras-chave:** Tanto no resumo em português quanto no *abstract* em inglês, elas devem ser redigidas com a inicial maiúscula, separadas entre si com ponto final e finalizadas
-também com ponto final.
+- **Palavras-chave:** Tanto no resumo em português quanto no *abstract* em inglês, as palavras-chave devem ser redigidas com as iniciais em letra minúscula (exceto siglas, substantivos próprios e nomes científicos), separadas entre si com ponto e vírgula e finalizadas com ponto final.
 - **Referências:** Para trabalhos escritos em português, o título da seção de referências deve ser *"Referências"* e não *"Referências Bibliográficas"*, que é o padrão do pacote ```natbib```. No arquivo de exemplo há o comando ```\renewcommand\bibname{Referências}``` que faz esta mudança.
 
 # Como utilizar a classe
